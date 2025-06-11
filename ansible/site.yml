@@ -1,0 +1,5 @@
+- name: Deploy JFrog Artifactory
+  hosts: all
+  become: true
+  roles:
+    - artifactory
