@@ -77,11 +77,9 @@ resource "aws_efs_mount_target" "artifactory_efs_mount" {
   security_groups = [aws_security_group.efs_sg.id]
 }
 
-##### End of EFS TF Block
-
 ##### Start of IAM block 
-
 # IAM Role that allows EC2 to assume CloudWatch permissions
+
 resource "aws_iam_role" "ec2_cloudwatch_role" {
   name = "ec2-cloudwatch-role"
 
@@ -105,53 +103,66 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
 }
 
 # Create instance profile so EC2 can use this IAM role
+
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "ec2-cloudwatch-instance-profile"
   role = aws_iam_role.ec2_cloudwatch_role.name
 }
 
-##### End of IAM block
+################## --- WAIT FOR SSH ---
 
 resource "null_resource" "wait_for_ssh" {
   depends_on = [aws_instance.prj-vm]
 
   provisioner "local-exec" {
     command = <<EOT
-IP=${aws_instance.prj-vm[0].public_ip}
+IP="${aws_instance.prj-vm[0].public_ip}"
+echo " IP isssssssssssssssssssssssssssssssssssss $IP "
 ATTEMPT=1
-MAX_ATTEMPTS=30
-while ! ssh -i ./${var.key_name} -o StrictHostKeyChecking=no -o ConnectTimeout=5 ec2-user@$IP 'exit' 2>/dev/null; do
-  echo "[$ATTEMPT/$MAX_ATTEMPTS] Waiting for SSH on $IP..."
+MAX_ATTEMPTS=5
+
+echo "[INFO] Waiting some seconds before attempting SSH..."
+sleep 5
+
+while ! ssh -i ./${var.key_name} -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${var.ansible_user}@$IP 'exit' 2>/dev/null; do
+  echo "[$ATTEMPT/$MAX_ATTEMPTS] Waiting for SSH on $IP...inside EC2 module of main playbook"
   if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
-    echo "ERROR: Timed out waiting for SSH."
+    echo "ERROR: Timed out waiting for SSH inside EC2 module of main playbook."
     exit 1
   fi
   ATTEMPT=$((ATTEMPT+1))
   sleep 5
 done
+
+echo "[INFO] SSH is now available on $IP"
+
 EOT
   }
 }
+
+################## --- GENERATE INVENTORY FILE ---
+
 
 resource "null_resource" "generate_inventory" {
   depends_on = [aws_instance.prj-vm]
 
   provisioner "local-exec" {
     command = <<EOT
-echo "!!!!!Generating inventory file!!!!!"
+echo "!!!!!          Generating inventory file              !!!!!"
 chmod 600 ./${var.key_name}
-
 # Ensure inventory directory exists
 mkdir -p ansible/inventory
 
 # Prepare host entry
-HOST_ENTRY="${aws_instance.prj-vm[0].public_ip} ansible_user=${var.ansible_user} ansible_ssh_private_key_file=./${var.key_name}"
+IP="${aws_instance.prj-vm[0].public_ip}"
+HOST_ENTRY="$IP ansible_user=${var.ansible_user} ansible_ssh_private_key_file=./${var.key_name}"
 
 # Check if the host is already in the file
-if ! grep -q "${aws_instance.prj-vm[0].public_ip}" ansible/inventory/hosts 2>/dev/null; then
+if ! grep -q "$IP" ansible/inventory/hosts 2>/dev/null; then
   if ! grep -q "^\[artifactory\]" ansible/inventory/hosts 2>/dev/null; then
     echo "[artifactory]" >> ansible/inventory/hosts
   fi
+
   echo "$HOST_ENTRY" > ansible/inventory/hosts
   echo "Appended host: $HOST_ENTRY"
 else
@@ -164,6 +175,7 @@ EOT
   }
 }
 
+################## --- RUN ARTIFACTORY SETUP PLAYBOOK ---
 
 resource "null_resource" "run_artifactory_setup_playbook" {
   depends_on = [
@@ -175,6 +187,8 @@ resource "null_resource" "run_artifactory_setup_playbook" {
   triggers = {
     playbook_hash = filemd5("${path.root}/ansible/site.yml")
     roles_hash    = filemd5("${path.root}/ansible/roles/artifactory/tasks/main.yml")
+    roles_hash    = filemd5("${path.root}/ansible/roles/cloudwatch_agent/tasks/main.yml")
+    roles_hash    = filemd5("${path.root}/ansible/roles/efs/tasks/main.yml")
   }
 
   provisioner "local-exec" {

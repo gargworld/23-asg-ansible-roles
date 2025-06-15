@@ -62,4 +62,3 @@ variable "ec2_instance_profile_name" {
   description = "IAM Instance Profile for CloudWatch"
   type        = string
 }
-

@@ -10,9 +10,5 @@ ec2_instance_count   = 1
 
 key_name             = "ec2-key"
 
-#security_group_value = "sg-0654c33bc324a31fd"
-#vpc_id               = "vpc-xxxxxxxx"
-#subnet_id            = "subnet-xxxxxxxx"
-
 ansible_user         = "ec2-user"
 ec2_instance_profile_name = "ec2-cloudwatch-instance-profile"

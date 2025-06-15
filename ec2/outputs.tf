@@ -1,12 +1,12 @@
-output "ec2_public_ips" {
+output "ec2_public_ip" {
   value = aws_instance.prj-vm[*].public_ip
 }
 
-output "ec2_private_ips" {
+output "ec2_private_ip" {
   value = aws_instance.prj-vm[*].private_ip
 }
 
-output "ec2_instance_ids" {
+output "ec2_instance_id" {
   value = aws_instance.prj-vm[*].id
 }
 
