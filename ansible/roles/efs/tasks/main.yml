@@ -1,11 +1,11 @@
 ---
-- name: Install NFS client (nfs-utils)
+- name: Install EFS(NFS) client (nfs-utils)
   become: yes
   package:
     name: nfs-utils
     state: present
 
-- name: Create mount directory
+- name: Create EFS mount directory
   become: yes
   file:
     path: /mnt/efs

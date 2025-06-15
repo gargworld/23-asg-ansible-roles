@@ -96,6 +96,7 @@ resource "aws_security_group" "prj-security-group" {
 module "ec2" {
   source                = "./ec2"
 
+  ec2_instance_name     = var.ec2_instance_name
   ami_id                = var.ami_id
   instance_type         = var.instance_type
   ec2_instance_count    = var.ec2_instance_count
@@ -107,6 +108,7 @@ module "ec2" {
   ansible_user          = var.ansible_user
   ec2_instance_profile_name = var.ec2_instance_profile_name
 
-  # 👇 Make sure this is EXACTLY "artifactory.pem" (used in your local-exec and playbook)
-  key_name              = "ec2-key.pem"
+  # 👇 Make sure this is EXACTLY "(used in your local-exec and playbook)
+  key_name              = var.key_name
+  private_key_file      = var.private_key_file
 }

@@ -4,10 +4,10 @@
   roles:
     - artifactory
     - efs
-
-- name: Configure CloudWatch Agent
-  hosts: ec2
-  become: yes
-  roles:
     - cloudwatch_agent
 
+#- nams: Configure CloudWatch Agent
+#  hosts: all
+#  become: yes
+#  roles:
+#    - cloudwatch_agent

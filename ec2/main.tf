@@ -9,7 +9,7 @@ resource "aws_instance" "prj-vm" {
   associate_public_ip_address = true
 
   tags = {
-    Name = "artifactory-${count.index}"
+    Name = "${var.ec2_instance_name}-${count.index}"
   }
 
   user_data = <<-EOF
@@ -20,6 +20,8 @@ resource "aws_instance" "prj-vm" {
               yum install -y ansible python3
               EOF
 }
+
+# Generate Key Pair
 
 resource "tls_private_key" "rsa_4096" {
   algorithm = "RSA"
@@ -33,7 +35,8 @@ resource "aws_key_pair" "key_pair" {
 
 resource "local_file" "private_key" {
   content              = tls_private_key.rsa_4096.private_key_pem
-  filename             = var.key_name
+  #filename             = var.key_name
+  filename             = var.private_key_file
   file_permission      = "0600" # 👈 Secure permissions
   directory_permission = "0700"
 }
@@ -117,14 +120,18 @@ resource "null_resource" "wait_for_ssh" {
   provisioner "local-exec" {
     command = <<EOT
 IP="${aws_instance.prj-vm[0].public_ip}"
-echo " IP isssssssssssssssssssssssssssssssssssss $IP "
+echo " IP isssssssssssssssssssssssssssssssssssss" $IP
 ATTEMPT=1
-MAX_ATTEMPTS=5
+MAX_ATTEMPTS=10
 
 echo "[INFO] Waiting some seconds before attempting SSH..."
 sleep 5
 
-while ! ssh -i ./${var.key_name} -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${var.ansible_user}@$IP 'exit' 2>/dev/null; do
+echo "pem key name is ------------" ${var.private_key_file}
+echo "ec2 user is ................" ${var.ansible_user}
+echo "ec2 ip is .................." $IP
+
+while ! ssh -i ./${var.private_key_file} -o StrictHostKeyChecking=no -o ConnectTimeout=5 ${var.ansible_user}@$IP 'exit' 2>/dev/null; do
   echo "[$ATTEMPT/$MAX_ATTEMPTS] Waiting for SSH on $IP...inside EC2 module of main playbook"
   if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
     echo "ERROR: Timed out waiting for SSH inside EC2 module of main playbook."
@@ -134,7 +141,7 @@ while ! ssh -i ./${var.key_name} -o StrictHostKeyChecking=no -o ConnectTimeout=5
   sleep 5
 done
 
-echo "[INFO] SSH is now available on $IP"
+echo "[INFO] SSH is now available on" $IP
 
 EOT
   }
@@ -149,13 +156,13 @@ resource "null_resource" "generate_inventory" {
   provisioner "local-exec" {
     command = <<EOT
 echo "!!!!!          Generating inventory file              !!!!!"
-chmod 600 ./${var.key_name}
+chmod 600 ./${var.private_key_file}
 # Ensure inventory directory exists
 mkdir -p ansible/inventory
 
 # Prepare host entry
 IP="${aws_instance.prj-vm[0].public_ip}"
-HOST_ENTRY="$IP ansible_user=${var.ansible_user} ansible_ssh_private_key_file=./${var.key_name}"
+HOST_ENTRY="$IP ansible_user=${var.ansible_user} ansible_ssh_private_key_file=./${var.private_key_file}"
 
 # Check if the host is already in the file
 if ! grep -q "$IP" ansible/inventory/hosts 2>/dev/null; then
@@ -187,18 +194,18 @@ resource "null_resource" "run_artifactory_setup_playbook" {
   triggers = {
     playbook_hash = filemd5("${path.root}/ansible/site.yml")
     roles_hash    = filemd5("${path.root}/ansible/roles/artifactory/tasks/main.yml")
-    roles_hash    = filemd5("${path.root}/ansible/roles/cloudwatch_agent/tasks/main.yml")
-    roles_hash    = filemd5("${path.root}/ansible/roles/efs/tasks/main.yml")
+    roles_hash2    = filemd5("${path.root}/ansible/roles/cloudwatch_agent/tasks/main.yml")
+    roles_hash3    = filemd5("${path.root}/ansible/roles/efs/tasks/main.yml")
   }
 
   provisioner "local-exec" {
     command = <<EOT
 cd ${path.root}
-echo "Using key: ${path.root}/${var.key_name}"
+echo "Using key: ${path.root}/${var.private_key_file}"
 echo "Trying to SSH into: ${aws_instance.prj-vm[0].public_ip}"
-chmod 600 ${path.root}/${var.key_name}
+chmod 600 ${path.root}/${var.private_key_file}
 
-echo "Running Ansible playbook..."
+echo "#####################Running Ansible playbook..."
 
 ansible-playbook ${path.root}/ansible/site.yml \
   -i ${path.root}/ansible/inventory/hosts \

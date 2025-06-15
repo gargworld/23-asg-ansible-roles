@@ -1,3 +1,8 @@
+variable "ec2_instance_name" {
+  description = "Name tag for the EC2 instance"
+  type        = string
+}
+
 variable "ami_id" {
   description = "AMI ID for the EC2 instance"
   type        = string
@@ -31,8 +36,12 @@ variable "security_group_value" {
 variable "key_name" {
   description = "Name of the existing AWS key pair"
   type        = string
-  default     = "artifactory"
   }
+
+variable "private_key_file" {
+  description = "Local filename for the generated PEM private key"
+  type        = string
+}
 
 variable "ansible_user" {
   description = "Username for Ansible SSH connections"
