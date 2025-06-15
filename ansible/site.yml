@@ -1,0 +1,13 @@
+- name: Deploy JFrog Artifactory, configure efs
+  hosts: all
+  become: true
+  roles:
+    - artifactory
+    - efs
+
+- name: Configure CloudWatch Agent
+  hosts: ec2
+  become: yes
+  roles:
+    - cloudwatch_agent
+
