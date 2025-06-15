@@ -38,20 +38,20 @@ variable "key_name" {
   type        = string
 }
 
-variable "security_group_value" {
-  description = "Security Group ID for EC2"
-  type        = string
-}
+#variable "security_group_value" {
+#  description = "Security Group ID for EC2"
+#  type        = string
+#}
 
-variable "vpc_id" {
-  description = "VPC ID to launch EC2 into"
-  type        = string
-}
+#variable "vpc_id" {
+#  description = "VPC ID to launch EC2 into"
+#  type        = string
+#}
 
-variable "subnet_id" {
-  description = "Subnet ID to launch EC2 into"
-  type        = string
-}
+#variable "subnet_id" {
+#  description = "Subnet ID to launch EC2 into"
+#  type        = string
+#}
 
 variable "ansible_user" {
   description = "Ansible SSH user"
