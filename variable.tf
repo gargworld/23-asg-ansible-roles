@@ -1,44 +1,65 @@
-variable "vpc_cidr" {
-  type = string
-  default = "10.0.0.0/26"
-}
-
-variable "public_cidr" {
-    type = string
-    default = "10.0.0.0/28"
+variable "region_value" {
+  description = "value for the region"
+  type        = string
 }
 
 variable "availability_zone" {
-  type = string 
-  default = "us-east-1a"
+  description = "value for AZ"
+  type        = string
 }
 
-variable "region_value" {
-  description = "value for the region"
-  default = "us-east-1"
+variable "vpc_cidr" {
+  description = "CIDR for the VPC"
+  type        = string
 }
 
-variable "ami_value" {
-  description = "value for the ami"
-  default = "ami-0b8c2bd77c5e270cf"
+variable "public_cidr" {
+  description = "CIDR for the public subnet"
+  type        = string
+}
+
+variable "ami_id" {
+  description = "AMI ID for the EC2 instance"
+  type        = string
 }
 
 variable "instance_type" {
-    description = "value for the instance type"
-    default = "t2.medium"
+  description = "Instance type for the EC2 instance"
+  type        = string
 }
 
 variable "ec2_instance_count" {
-  description = "value for the ami"
-  default = 1
-}
-
-variable "security_group_value" {
-  description = "value for the security group"
-  default = "sg-0654c33bc324a31fd"
+  description = "Number of EC2 instances to launch"
+  type        = number
 }
 
 variable "key_name" {
-  description = "Name of the SSH key pair"
-  default = "artifactory.pem"
+  description = "SSH Key pair name"
+  type        = string
 }
+
+variable "security_group_value" {
+  description = "Security Group ID for EC2"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "VPC ID to launch EC2 into"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID to launch EC2 into"
+  type        = string
+}
+
+variable "ansible_user" {
+  description = "Ansible SSH user"
+  type        = string
+}
+
+variable "ec2_instance_profile_name" {
+  description = "IAM Instance Profile for CloudWatch"
+  type        = string
+}
+

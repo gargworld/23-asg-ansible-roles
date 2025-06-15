@@ -73,8 +73,8 @@ resource "aws_security_group" "prj-security-group" {
 
   ingress {
     description = "Jenkins inbound allow port 8080"
-    from_port   = 8081
-    to_port     = 8081
+    from_port   = 0
+    to_port     = 9999
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -95,7 +95,8 @@ resource "aws_security_group" "prj-security-group" {
 
 module "ec2" {
   source                = "./ec2"
-  ami_value             = var.ami_value
+
+  ami_id                = var.ami_id
   instance_type         = var.instance_type
   ec2_instance_count    = var.ec2_instance_count
 
@@ -103,6 +104,9 @@ module "ec2" {
   subnet_id             = aws_subnet.prj-public_subnet.id
   security_group_value  = aws_security_group.prj-security-group.id
 
+  ansible_user          = var.ansible_user
+  ec2_instance_profile_name = var.ec2_instance_profile_name
+
   # 👇 Make sure this is EXACTLY "artifactory.pem" (used in your local-exec and playbook)
-  key_name              = "artifactory.pem"
+  key_name              = "ec2-key.pem"
 }

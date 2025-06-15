@@ -1,5 +1,5 @@
 resource "aws_instance" "prj-vm" {
-  ami                    = var.ami_value
+  ami                    = var.ami_id
   instance_type          = var.instance_type
   count                  = 1
   subnet_id              = var.subnet_id
@@ -79,6 +79,39 @@ resource "aws_efs_mount_target" "artifactory_efs_mount" {
 
 ##### End of EFS TF Block
 
+##### Start of IAM block 
+
+# IAM Role that allows EC2 to assume CloudWatch permissions
+resource "aws_iam_role" "ec2_cloudwatch_role" {
+  name = "ec2-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# Attach CloudWatchAgent policy to the role
+
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent_attach" {
+  role       = aws_iam_role.ec2_cloudwatch_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+# Create instance profile so EC2 can use this IAM role
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "ec2-cloudwatch-instance-profile"
+  role = aws_iam_role.ec2_cloudwatch_role.name
+}
+
+##### End of IAM block
+
 resource "null_resource" "wait_for_ssh" {
   depends_on = [aws_instance.prj-vm]
 
@@ -99,7 +132,6 @@ done
 EOT
   }
 }
-
 
 resource "null_resource" "generate_inventory" {
   depends_on = [aws_instance.prj-vm]
