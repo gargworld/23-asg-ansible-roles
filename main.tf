@@ -1,8 +1,3 @@
-#provider "aws" {
-#  region  = "us-east-1"   # change as needed
-#  profile = "default"     # or omit this if using environment variables
-#}
-
 resource "aws_vpc" "Terraform_VPC" {
   cidr_block           = var.vpc_cidr
   instance_tenancy     = "default"
@@ -97,14 +92,15 @@ resource "aws_security_group" "prj-security-group" {
   }
 }
 
+
 module "ec2" {
   source                = "./ec2"
-
   ami_value             = var.ami_value
   instance_type         = var.instance_type
   ec2_instance_count    = var.ec2_instance_count
 
-  subnet_id_value       = aws_subnet.prj-public_subnet.id
+  vpc_id    	        = aws_vpc.Terraform_VPC.id
+  subnet_id             = aws_subnet.prj-public_subnet.id
   security_group_value  = aws_security_group.prj-security-group.id
 
   # 👇 Make sure this is EXACTLY "artifactory.pem" (used in your local-exec and playbook)

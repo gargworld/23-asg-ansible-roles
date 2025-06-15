@@ -2,7 +2,7 @@ resource "aws_instance" "prj-vm" {
   ami                    = var.ami_value
   instance_type          = var.instance_type
   count                  = 1
-  subnet_id              = var.subnet_id_value
+  subnet_id              = var.subnet_id
   key_name               = var.key_name  # Use the existing key pair name here
   vpc_security_group_ids = [var.security_group_value]
 
@@ -37,6 +37,47 @@ resource "local_file" "private_key" {
   file_permission      = "0600" # 👈 Secure permissions
   directory_permission = "0700"
 }
+
+###### EFS TF block
+
+resource "aws_efs_file_system" "artifactory_efs" {
+  creation_token = "artifactory-efs"
+  tags = {
+    Name = "ArtifactoryEFS"
+  }
+}
+
+resource "aws_security_group" "efs_sg" {
+  name        = "efs-sg"
+  description = "Allow NFS access"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 2049
+    to_port     = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "efs-sg"
+  }
+}
+
+resource "aws_efs_mount_target" "artifactory_efs_mount" {
+  file_system_id  = aws_efs_file_system.artifactory_efs.id
+  subnet_id       = var.subnet_id
+  security_groups = [aws_security_group.efs_sg.id]
+}
+
+##### End of EFS TF Block
 
 resource "null_resource" "wait_for_ssh" {
   depends_on = [aws_instance.prj-vm]
@@ -115,6 +156,7 @@ echo "Running Ansible playbook..."
 
 ansible-playbook ${path.root}/ansible/site.yml \
   -i ${path.root}/ansible/inventory/hosts \
+  --extra-vars "efs_dns_name=${aws_efs_file_system.artifactory_efs.dns_name}" \
   --ssh-extra-args='-o StrictHostKeyChecking=no -o ConnectTimeout=5'
 
 EOT
