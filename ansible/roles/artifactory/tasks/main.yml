@@ -1,4 +1,4 @@
-- name: Remove old conflicting Docker packages
+- name: artifactory Remove old conflicting Docker packages
   package:
     name:
       - docker
@@ -9,16 +9,16 @@
     state: absent
   ignore_errors: yes
 
-- name: Clean Yum metadata
+- name: artifactory Clean Yum metadata
   command: yum clean all
 
-- name: Rebuild Yum cache
+- name: artifactory Rebuild Yum cache
   command: yum makecache
 
-- name: Clean all yum metadata
+- name: artifactory Clean all yum metadata
   command: yum clean metadata
   
-- name: Ensure public DNS entries exist in /etc/resolv.conf
+- name: artifactory Ensure public DNS entries exist in /etc/resolv.conf
   lineinfile:
     path: /etc/resolv.conf
     line: "{{ item }}"
@@ -28,7 +28,7 @@
     - "nameserver 8.8.8.8"
     - "nameserver 8.8.4.4"
   
-- name: Install required dependencies
+- name: artifactory Install required dependencies
   package:
     name:
       - yum-utils
@@ -36,12 +36,12 @@
       - lvm2
     state: present
 
-- name: Add Docker CE repo
+- name: artifactory Add Docker CE repo
   get_url:
     url: https://download.docker.com/linux/centos/docker-ce.repo
     dest: /etc/yum.repos.d/docker-ce.repo
 
-- name: Install Docker CE and CLI
+- name: artifactory Install Docker CE and CLI
   package:
     name:
       - docker-ce

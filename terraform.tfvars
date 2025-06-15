@@ -8,7 +8,7 @@ public_cidr          = "10.0.0.0/28"
 ami_id               = "ami-0b8c2bd77c5e270cf" # Red Hat Enterprise Linux
 
 ec2_instance_name    = "rhel96"  # or whatever you want
-instance_type        = "t2.micro"
+instance_type        = "t2.large"
 ec2_instance_count   = 1
 
 key_name             = "pemkey"

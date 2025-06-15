@@ -72,9 +72,9 @@ resource "aws_security_group" "prj-security-group" {
   }
 
   ingress {
-    description = "Jenkins inbound allow port 8080"
-    from_port   = 0
-    to_port     = 9999
+    description = "inbound allow port"
+    from_port   = 8081 
+    to_port     = 8081
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
