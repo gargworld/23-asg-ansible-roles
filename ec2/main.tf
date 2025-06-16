@@ -192,10 +192,13 @@ resource "null_resource" "run_system_setup_playbook" {
   ]
 
   triggers = {
-    playbook_hash = filemd5("${path.root}/ansible/site.yml")
-    roles_hash    = filemd5("${path.root}/ansible/roles/artifactory/tasks/main.yml")
-    roles_hash2    = filemd5("${path.root}/ansible/roles/cloudwatch_agent/tasks/main.yml")
-    roles_hash3    = filemd5("${path.root}/ansible/roles/efs/tasks/main.yml")
+    site_hash                  = filemd5("${path.root}/ansible/site.yml")
+
+    system-setup_roles_hash    = filemd5("${path.root}/ansible/roles/system-setup/tasks/main.yml")
+    docker-setup_roles_hash    = filemd5("${path.root}/ansible/roles/docker-setup/tasks/main.yml")
+    artifactory_roles_hash     = filemd5("${path.root}/ansible/roles/artifactory/tasks/main.yml")
+    efs_roles_hash	       = filemd5("${path.root}/ansible/roles/efs/tasks/main.yml")
+    cloudwatch_roles_hash      = filemd5("${path.root}/ansible/roles/cloudwatch_agent/tasks/main.yml")
   }
 
   provisioner "local-exec" {
