@@ -5,7 +5,7 @@ artifactory_image: docker.bintray.io/jfrog/artifactory-oss:6.23.13
 artifactory_container_name: artifactory
 artifactory_port: 8081
 artifactory_data_dir: /data/artifactory
-postgre_data_dir: /data/postgresql
+postgresql_data_dir: /data/postgresql
 #
 db_user: artifactory
 db_password: artifactory
