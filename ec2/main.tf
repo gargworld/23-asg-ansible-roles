@@ -43,8 +43,8 @@ resource "local_file" "private_key" {
 
 ###### EFS TF block
 
-resource "aws_efs_file_system" "artifactory_efs" {
-  creation_token = "artifactory-efs"
+resource "aws_efs_file_system" "system_efs" {
+  creation_token = "system-efs"
   tags = {
     Name = "ArtifactoryEFS"
   }
@@ -74,8 +74,8 @@ resource "aws_security_group" "efs_sg" {
   }
 }
 
-resource "aws_efs_mount_target" "artifactory_efs_mount" {
-  file_system_id  = aws_efs_file_system.artifactory_efs.id
+resource "aws_efs_mount_target" "system_efs_mount" {
+  file_system_id  = aws_efs_file_system.system_efs.id
   subnet_id       = var.subnet_id
   security_groups = [aws_security_group.efs_sg.id]
 }
@@ -166,8 +166,8 @@ HOST_ENTRY="$IP ansible_user=${var.ansible_user} ansible_ssh_private_key_file=./
 
 # Check if the host is already in the file
 if ! grep -q "$IP" ansible/inventory/hosts 2>/dev/null; then
-  if ! grep -q "^\[artifactory\]" ansible/inventory/hosts 2>/dev/null; then
-    echo "[artifactory]" >> ansible/inventory/hosts
+  if ! grep -q "^\[system\]" ansible/inventory/hosts 2>/dev/null; then
+    echo "[system]" >> ansible/inventory/hosts
   fi
 
   echo "$HOST_ENTRY" > ansible/inventory/hosts
@@ -184,7 +184,7 @@ EOT
 
 ################## --- RUN ARTIFACTORY SETUP PLAYBOOK ---
 
-resource "null_resource" "run_artifactory_setup_playbook" {
+resource "null_resource" "run_system_setup_playbook" {
   depends_on = [
     null_resource.wait_for_ssh,
     aws_instance.prj-vm,
@@ -200,18 +200,18 @@ resource "null_resource" "run_artifactory_setup_playbook" {
 
   provisioner "local-exec" {
     command = <<EOT
-cd ${path.root}
-echo "Using key: ${path.root}/${var.private_key_file}"
-echo "Trying to SSH into: ${aws_instance.prj-vm[0].public_ip}"
-chmod 600 ${path.root}/${var.private_key_file}
+	cd ${path.root}
+	echo "Using key: ${path.root}/${var.private_key_file}"
+	echo "Trying to SSH into: ${aws_instance.prj-vm[0].public_ip}"
+	chmod 600 ${path.root}/${var.private_key_file}
 
-echo "#####################Running Ansible playbook..."
+	echo "#####################Running Ansible playbook..."
 
-ansible-playbook ${path.root}/ansible/site.yml \
-  -i ${path.root}/ansible/inventory/hosts \
-  --extra-vars "efs_dns_name=${aws_efs_file_system.artifactory_efs.dns_name}" \
-  --ssh-extra-args='-o StrictHostKeyChecking=no -o ConnectTimeout=5'
+	ansible-playbook ${path.root}/ansible/site.yml \
+  		-i ${path.root}/ansible/inventory/hosts \
+  		--extra-vars "efs_dns_name=${aws_efs_file_system.system_efs.dns_name}" \
+  		--ssh-extra-args='-o StrictHostKeyChecking=no -o ConnectTimeout=5'
 
-EOT
+    EOT
   }
 }
