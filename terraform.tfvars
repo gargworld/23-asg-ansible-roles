@@ -9,7 +9,7 @@ ami_id               = "ami-0b8c2bd77c5e270cf" # Red Hat Enterprise Linux
 
 ec2_instance_name    = "rhel96"  # or whatever you want
 instance_type        = "t2.large"
-ec2_instance_count   = 1
+#ec2_instance_count   = 1
 
 key_name             = "pemkey"
 private_key_file     = "pemkey.pem"

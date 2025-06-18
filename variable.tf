@@ -33,10 +33,10 @@ variable "instance_type" {
   type        = string
 }
 
-variable "ec2_instance_count" {
-  description = "Number of EC2 instances to launch"
-  type        = number
-}
+#variable "ec2_instance_count" {
+#  description = "Number of EC2 instances to launch"
+#  type        = number
+#}
 
 variable "key_name" {
   description = "SSH Key pair name"

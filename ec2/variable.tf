@@ -13,10 +13,10 @@ variable "instance_type" {
   type        = string
 }
 
-variable "ec2_instance_count" {
-  description = "Number of EC2 instances"
-  type        = number
-}
+#variable "ec2_instance_count" {
+#  description = "Number of EC2 instances"
+#  type        = number
+#}
 
 variable "vpc_id" {
   description = "The VPC ID in which resources will be created"

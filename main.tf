@@ -99,7 +99,7 @@ module "ec2" {
   ec2_instance_name     = var.ec2_instance_name
   ami_id                = var.ami_id
   instance_type         = var.instance_type
-  ec2_instance_count    = var.ec2_instance_count
+  #ec2_instance_count    = var.ec2_instance_count
 
   vpc_id    	        = aws_vpc.Terraform_VPC.id
   subnet_id             = aws_subnet.prj-public_subnet.id
