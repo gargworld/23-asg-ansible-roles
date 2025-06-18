@@ -61,7 +61,3 @@ docker logs --tail 100 -f artifactory
 
 NOTE : Do not create this file db.properties. 
 Artifactory container will create by itself from docker-compose.yml /var/opt/jfrog/artifactory/etc/db.properties
-
-
-
-# 23-asg-ansible-roles
