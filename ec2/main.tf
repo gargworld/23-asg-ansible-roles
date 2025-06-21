@@ -1,13 +1,67 @@
+# ---------------------------------------------
+# LAUNCH TEMPLATE & AUTOSCALING WITH KEY PAIR
+# ---------------------------------------------
+
+# Generate RSA key pair
+resource "tls_private_key" "rsa_4096" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Create AWS key pair using generated public key
+resource "aws_key_pair" "key_pair" {
+  key_name   = "pemkey"
+  public_key = tls_private_key.rsa_4096.public_key_openssh
+}
+
+# Save private key locally (optional)
+resource "local_file" "private_key" {
+  content              = tls_private_key.rsa_4096.private_key_pem
+  filename             = "pemkey.pem"
+  file_permission      = "0600"
+  directory_permission = "0700"
+}
+
+################## iam cloudwatch role
+
+resource "aws_iam_role" "ec2_cloudwatch_role" {
+  name = "ec2-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "ec2-cloudwatch-instance-profile"
+  role = aws_iam_role.ec2_cloudwatch_role.name
+}
+
+######################### Launch Template ##################################
+
 resource "aws_launch_template" "ec2_template" {
   #name_prefix   = "prj-template-"
   name_prefix   = "${var.ec2_instance_name}-lt-"
   image_id      = var.ami_id
   instance_type = var.instance_type
-  key_name      = var.key_name
+  key_name      = aws_key_pair.key_pair.key_name
 
-  iam_instance_profile {
-    name = var.ec2_instance_profile_name
-  }
+#  iam_instance_profile {
+#    name = var.ec2_instance_profile_name
+#  }
+
+
+   iam_instance_profile {
+     name = aws_iam_instance_profile.ec2_profile.name
+   }
+
 
   network_interfaces {
     associate_public_ip_address = true
@@ -32,6 +86,8 @@ resource "aws_launch_template" "ec2_template" {
     }
   }
 }
+
+########### Auto Scaling Group   #############################
 
 resource "aws_autoscaling_group" "ec2_asg" {
   name                      = "${var.ec2_instance_name}-asg"
@@ -101,7 +157,7 @@ resource "null_resource" "wait_for_ssh" {
   provisioner "local-exec" {
     command = <<EOT
 ASG_INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances \
-  --query "AutoScalingInstances[?AutoScalingGroupName=='ec2-asg'].InstanceId" \
+  --query "AutoScalingInstances[?AutoScalingGroupName=='${var.ec2_instance_name}-asg'].InstanceId" \
   --output text)
 
 IP=$(aws ec2 describe-instances \
@@ -133,7 +189,7 @@ resource "null_resource" "generate_inventory" {
   provisioner "local-exec" {
     command = <<EOT
 ASG_INSTANCE_ID=$(aws autoscaling describe-auto-scaling-instances \
-  --query "AutoScalingInstances[?AutoScalingGroupName=='ec2-asg'].InstanceId" \
+  --query "AutoScalingInstances[?AutoScalingGroupName=='${var.ec2_instance_name}-asg'].InstanceId" \
   --output text)
 
 IP=$(aws ec2 describe-instances \

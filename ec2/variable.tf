@@ -50,4 +50,5 @@ variable "ansible_user" {
 
 variable "ec2_instance_profile_name" {
   description = "ec2_instance_profile_name for ec2-cloudwatch-instance-profile"
+  type        = string
 }
